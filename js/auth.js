@@ -1,6 +1,6 @@
 // ======================================================
 // Escala São Miguel
-// auth.js
+// auth.js (CORRIGIDO)
 // ======================================================
 
 import { auth } from "./firebase.js";
@@ -28,18 +28,18 @@ const loading = document.getElementById("loading");
 const forgotPassword = document.getElementById("forgotPassword");
 const togglePassword = document.getElementById("togglePassword");
 
+const isLoginPage = window.location.pathname.includes("login");
+
 
 // ======================================================
 // MENSAGEM
 // ======================================================
 
 function mostrarMensagem(texto, cor = "#ef4444") {
-
     if (!loginMessage) return;
 
     loginMessage.innerText = texto;
     loginMessage.style.color = cor;
-
 }
 
 
@@ -48,23 +48,19 @@ function mostrarMensagem(texto, cor = "#ef4444") {
 // ======================================================
 
 function iniciarLoading() {
-
     if (!btnLogin) return;
 
     btnLogin.disabled = true;
     loginText?.classList.add("hidden");
     loading?.classList.remove("hidden");
-
 }
 
 function finalizarLoading() {
-
     if (!btnLogin) return;
 
     btnLogin.disabled = false;
     loginText?.classList.remove("hidden");
     loading?.classList.add("hidden");
-
 }
 
 
@@ -73,27 +69,17 @@ function finalizarLoading() {
 // ======================================================
 
 if (togglePassword && password) {
-
     togglePassword.addEventListener("click", () => {
 
         if (password.type === "password") {
-
             password.type = "text";
-
-            togglePassword.innerHTML =
-                '<i class="fa-solid fa-eye-slash"></i>';
-
+            togglePassword.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
         } else {
-
             password.type = "password";
-
-            togglePassword.innerHTML =
-                '<i class="fa-solid fa-eye"></i>';
-
+            togglePassword.innerHTML = '<i class="fa-solid fa-eye"></i>';
         }
 
     });
-
 }
 
 
@@ -104,7 +90,6 @@ if (togglePassword && password) {
 if (form) {
 
     form.addEventListener("submit", async (e) => {
-
         e.preventDefault();
 
         mostrarMensagem("");
@@ -112,10 +97,11 @@ if (form) {
 
         try {
 
+            // 🔧 CORRIGIDO: substitui funções inexistentes
             if (remember?.checked) {
-                await lembrarLogin();
+                localStorage.setItem("sessao", "persistente");
             } else {
-                await sessaoTemporaria();
+                localStorage.setItem("sessao", "temporaria");
             }
 
             await signInWithEmailAndPassword(
@@ -159,9 +145,7 @@ if (form) {
             mostrarMensagem(mensagem);
 
         } finally {
-
             finalizarLoading();
-
         }
 
     });
@@ -176,7 +160,6 @@ if (form) {
 if (forgotPassword && email) {
 
     forgotPassword.addEventListener("click", async (e) => {
-
         e.preventDefault();
 
         if (email.value.trim() === "") {
@@ -194,9 +177,7 @@ if (forgotPassword && email) {
             mostrarMensagem("E-mail de recuperação enviado.", "#16a34a");
 
         } catch (error) {
-
             mostrarMensagem(error.message);
-
         }
 
     });
@@ -205,17 +186,28 @@ if (forgotPassword && email) {
 
 
 // ======================================================
-// AUTO LOGIN
+// AUTO LOGIN (SEM LOOP - CORRIGIDO VERCEL)
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    navigate("/home");
-  } else {
-    if (window.location.pathname !== "/login") {
-      navigate("/login");
+
+    if (user) {
+
+        if (window.location.pathname !== "/home") {
+            window.location.href = "/home";
+        }
+
+    } else {
+
+        if (
+            window.location.pathname !== "/login" &&
+            !window.location.pathname.includes("login")
+        ) {
+            window.location.href = "/login";
+        }
+
     }
-  }
+
 });
 
 
@@ -226,6 +218,6 @@ onAuthStateChanged(auth, (user) => {
 export async function logout() {
 
     await signOut(auth);
-    window.location.href = "login.html";
+    window.location.href = "/login";
 
 }
