@@ -210,24 +210,19 @@ if (forgotPassword && email) {
 
 onAuthStateChanged(auth, (user) => {
 
-    const pagina = window.location.pathname;
+    const path = window.location.pathname;
 
     if (user) {
 
-        if (
-            pagina.includes("login.html") ||
-            pagina === "/" ||
-            pagina.includes("index.html")
-        ) {
+        if (path.includes("login.html") || path === "/" || path.includes("index.html")) {
             window.location.replace("dashboard.html");
         }
 
     } else {
 
-        if (!pagina.includes("login.html")) {
+        if (!path.includes("login.html")) {
             window.location.replace("login.html");
         }
-
     }
 
 });
