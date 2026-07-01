@@ -3,7 +3,11 @@
 // auth.js
 // ======================================================
 
-import { auth, lembrarLogin, sessaoTemporaria } from "./firebase.js";
+import {
+    auth,
+    lembrarLogin,
+    sessaoTemporaria
+} from "../firebase.js";
 
 import {
     signInWithEmailAndPassword,
@@ -14,238 +18,249 @@ import {
 
 
 // ======================================================
-// ELEMENTOS
+// Elementos da tela
 // ======================================================
 
 const form = document.getElementById("loginForm");
+
 const email = document.getElementById("email");
+
 const password = document.getElementById("password");
+
 const remember = document.getElementById("remember");
+
 const loginMessage = document.getElementById("loginMessage");
+
 const btnLogin = document.getElementById("btnLogin");
+
 const loginText = document.getElementById("loginText");
+
 const loading = document.getElementById("loading");
+
 const forgotPassword = document.getElementById("forgotPassword");
+
 const togglePassword = document.getElementById("togglePassword");
 
 
 // ======================================================
-// MENSAGEM
+// Mostrar mensagem
 // ======================================================
 
 function mostrarMensagem(texto, cor = "#ef4444") {
 
-    if (!loginMessage) return;
-
     loginMessage.innerText = texto;
+
     loginMessage.style.color = cor;
 
 }
 
 
 // ======================================================
-// LOADING
+// Loading
 // ======================================================
 
 function iniciarLoading() {
 
-    if (!btnLogin) return;
-
     btnLogin.disabled = true;
-    loginText?.classList.add("hidden");
-    loading?.classList.remove("hidden");
+
+    loginText.classList.add("hidden");
+
+    loading.classList.remove("hidden");
 
 }
 
 function finalizarLoading() {
 
-    if (!btnLogin) return;
-
     btnLogin.disabled = false;
-    loginText?.classList.remove("hidden");
-    loading?.classList.add("hidden");
+
+    loginText.classList.remove("hidden");
+
+    loading.classList.add("hidden");
 
 }
 
 
 // ======================================================
-// TOGGLE SENHA (CORRIGIDO)
+// Mostrar/Ocultar senha
 // ======================================================
 
-if (togglePassword && password) {
+togglePassword.addEventListener("click", () => {
 
-    togglePassword.addEventListener("click", () => {
+    if (password.type === "password") {
 
-        if (password.type === "password") {
+        password.type = "text";
 
-            password.type = "text";
-
-            togglePassword.innerHTML =
-                '<i class="fa-solid fa-eye-slash"></i>';
-
-        } else {
-
-            password.type = "password";
-
-            togglePassword.innerHTML =
-                '<i class="fa-solid fa-eye"></i>';
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// LOGIN
-// ======================================================
-
-if (form) {
-
-    form.addEventListener("submit", async (e) => {
-
-        e.preventDefault();
-
-        mostrarMensagem("");
-        iniciarLoading();
-
-        try {
-
-            if (remember?.checked) {
-                await lembrarLogin();
-            } else {
-                await sessaoTemporaria();
-            }
-
-           await signInWithEmailAndPassword(
-    auth,
-    email.value.trim(),
-    password.value
-);
-
-// NÃO redireciona aqui
-// deixa o authState fazer isso
-            );
-
-            mostrarMensagem("Login realizado com sucesso!", "#16a34a");
-
-        } catch (error) {
-
-            let mensagem = "Erro ao realizar login.";
-
-            switch (error.code) {
-
-                case "auth/invalid-email":
-                    mensagem = "E-mail inválido.";
-                    break;
-
-                case "auth/user-not-found":
-                    mensagem = "Usuário não encontrado.";
-                    break;
-
-                case "auth/wrong-password":
-                    mensagem = "Senha incorreta.";
-                    break;
-
-                case "auth/invalid-credential":
-                    mensagem = "E-mail ou senha inválidos.";
-                    break;
-
-                case "auth/too-many-requests":
-                    mensagem = "Muitas tentativas. Aguarde alguns minutos.";
-                    break;
-
-                default:
-                    mensagem = error.message;
-            }
-
-            mostrarMensagem(mensagem);
-
-        } finally {
-
-            finalizarLoading();
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// RECUPERAR SENHA
-// ======================================================
-
-if (forgotPassword && email) {
-
-    forgotPassword.addEventListener("click", async (e) => {
-
-        e.preventDefault();
-
-        if (email.value.trim() === "") {
-            mostrarMensagem("Informe seu e-mail primeiro.");
-            return;
-        }
-
-        try {
-
-            await sendPasswordResetEmail(
-                auth,
-                email.value.trim()
-            );
-
-            mostrarMensagem(
-                "E-mail de recuperação enviado.",
-                "#16a34a"
-            );
-
-        } catch (error) {
-
-            mostrarMensagem(error.message);
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// AUTO LOGIN
-// ======================================================
-onAuthStateChanged(auth, (user) => {
-
-    const pagina = window.location.pathname;
-
-    // ainda carregando auth? não faz nada
-    if (user === undefined) return;
-
-    if (user) {
-
-        // se estiver no login, manda pro sistema
-        if (pagina.includes("login.html") || pagina === "/" || pagina === "/index.html") {
-            window.location.replace("dashboard.html");
-        }
+        togglePassword.innerHTML =
+            '<i class="fa-solid fa-eye-slash"></i>';
 
     } else {
 
-        // se não tiver login, força login
-        if (!pagina.includes("login.html")) {
-            window.location.replace("login.html");
-        }
+        password.type = "password";
+
+        togglePassword.innerHTML =
+            '<i class="fa-solid fa-eye"></i>';
+
     }
 
 });
 
 
 // ======================================================
-// LOGOUT
+// Login
+// ======================================================
+
+form.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    mostrarMensagem("");
+
+    iniciarLoading();
+
+    try {
+
+        if (remember.checked) {
+
+            await lembrarLogin();
+
+        } else {
+
+            await sessaoTemporaria();
+
+        }
+
+        await signInWithEmailAndPassword(
+
+            auth,
+
+            email.value.trim(),
+
+            password.value
+
+        );
+
+        mostrarMensagem(
+            "Login realizado com sucesso!",
+            "#16a34a"
+        );
+
+        setTimeout(() => {
+
+            window.location.href = "dashboard.html";
+
+        }, 800);
+
+    } catch (error) {
+
+        let mensagem = "Erro ao realizar login.";
+
+        switch (error.code) {
+
+            case "auth/invalid-email":
+                mensagem = "E-mail inválido.";
+                break;
+
+            case "auth/user-not-found":
+                mensagem = "Usuário não encontrado.";
+                break;
+
+            case "auth/wrong-password":
+                mensagem = "Senha incorreta.";
+                break;
+
+            case "auth/invalid-credential":
+                mensagem = "E-mail ou senha inválidos.";
+                break;
+
+            case "auth/too-many-requests":
+                mensagem = "Muitas tentativas. Aguarde alguns minutos.";
+                break;
+
+            default:
+                mensagem = error.message;
+        }
+
+        mostrarMensagem(mensagem);
+
+    } finally {
+
+        finalizarLoading();
+
+    }
+
+});
+
+
+// ======================================================
+// Recuperar senha
+// ======================================================
+
+forgotPassword.addEventListener("click", async (e) => {
+
+    e.preventDefault();
+
+    if (email.value.trim() === "") {
+
+        mostrarMensagem("Informe seu e-mail primeiro.");
+
+        return;
+
+    }
+
+    try {
+
+        await sendPasswordResetEmail(
+
+            auth,
+
+            email.value.trim()
+
+        );
+
+        mostrarMensagem(
+
+            "E-mail de recuperação enviado.",
+
+            "#16a34a"
+
+        );
+
+    } catch (error) {
+
+        mostrarMensagem(error.message);
+
+    }
+
+});
+
+
+// ======================================================
+// Usuário já logado
+// ======================================================
+
+onAuthStateChanged(auth, (user) => {
+
+    if (!user) return;
+
+    const pagina = window.location.pathname;
+
+    if (pagina.includes("login.html")) {
+
+        window.location.href = "dashboard.html";
+
+    }
+
+});
+
+
+// ======================================================
+// Logout
 // ======================================================
 
 export async function logout() {
 
     await signOut(auth);
+
     window.location.href = "login.html";
 
 }
