@@ -240,14 +240,9 @@ forgotPassword.addEventListener("click", async (e) => {
 
 onAuthStateChanged(auth, (user) => {
 
-    if (!user) return;
-
-    const pagina = window.location.pathname;
-
-    if (pagina.includes("login.html")) {
-
-        window.location.href = "dashboard.html";
-
+    if (!user) {
+        window.location.replace("login.html");
+        return;
     }
 
 });
