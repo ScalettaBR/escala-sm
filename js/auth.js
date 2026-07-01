@@ -118,17 +118,17 @@ if (form) {
                 await sessaoTemporaria();
             }
 
-            await signInWithEmailAndPassword(
-                auth,
-                email.value.trim(),
-                password.value
+           await signInWithEmailAndPassword(
+    auth,
+    email.value.trim(),
+    password.value
+);
+
+// NÃO redireciona aqui
+// deixa o authState fazer isso
             );
 
             mostrarMensagem("Login realizado com sucesso!", "#16a34a");
-
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 800);
 
         } catch (error) {
 
@@ -214,13 +214,16 @@ if (forgotPassword && email) {
 // ======================================================
 // AUTO LOGIN
 // ======================================================
-
 onAuthStateChanged(auth, (user) => {
 
-    if (!user) return;
+    const pagina = window.location.pathname;
 
-    if (window.location.pathname.includes("login.html")) {
-        window.location.href = "dashboard.html";
+    if (user && pagina.includes("login.html")) {
+        window.location.replace("dashboard.html");
+    }
+
+    if (!user && !pagina.includes("login.html")) {
+        window.location.replace("login.html");
     }
 
 });
