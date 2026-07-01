@@ -1,261 +1,140 @@
-// ======================================================
-// Escala São Miguel
-// auth.js
-// ======================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-import {
-    auth,
-    lembrarLogin,
-    sessaoTemporaria
-} from "./firebase.js";
+<head>
 
-import {
-    signInWithEmailAndPassword,
-    sendPasswordResetEmail,
-    onAuthStateChanged,
-    signOut
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    <meta charset="UTF-8">
 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-// ======================================================
-// Elementos da tela
-// ======================================================
+    <title>Escala São Miguel</title>
 
-const form = document.getElementById("loginForm");
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 
-const email = document.getElementById("email");
+    <link rel="preconnect" href="https://fonts.googleapis.com">
 
-const password = document.getElementById("password");
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-const remember = document.getElementById("remember");
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-const loginMessage = document.getElementById("loginMessage");
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-const btnLogin = document.getElementById("btnLogin");
+</head>
 
-const loginText = document.getElementById("loginText");
+<body>
 
-const loading = document.getElementById("loading");
+<div class="sidebar">
 
-const forgotPassword = document.getElementById("forgotPassword");
+    <div class="logo">
 
-const togglePassword = document.getElementById("togglePassword");
+        <i class="fa-solid fa-calendar-days"></i>
 
+        <span>Escala São Miguel</span>
 
-// ======================================================
-// Mostrar mensagem
-// ======================================================
+    </div>
 
-function mostrarMensagem(texto, cor = "#ef4444") {
+    <nav>
 
-    loginMessage.innerText = texto;
+        <a href="dashboard.html" class="active">
 
-    loginMessage.style.color = cor;
+            <i class="fa-solid fa-house"></i>
 
-}
+            Dashboard
 
+        </a>
 
-// ======================================================
-// Loading
-// ======================================================
+        <a href="pages/funcionarios.html">
 
-function iniciarLoading() {
+            <i class="fa-solid fa-users"></i>
 
-    btnLogin.disabled = true;
+            Funcionários
 
-    loginText.classList.add("hidden");
+        </a>
 
-    loading.classList.remove("hidden");
+        <a href="pages/escalas.html">
 
-}
+            <i class="fa-solid fa-calendar-week"></i>
 
-function finalizarLoading() {
+            Escalas
 
-    btnLogin.disabled = false;
+        </a>
 
-    loginText.classList.remove("hidden");
+    </nav>
 
-    loading.classList.add("hidden");
+    <button id="btnLogout">
 
-}
+        <i class="fa-solid fa-right-from-bracket"></i>
 
+        Sair
 
-// ======================================================
-// Mostrar/Ocultar senha
-// ======================================================
+    </button>
 
-togglePassword.addEventListener("click", () => {
+</div>
 
-    if (password.type === "password") {
+<div class="content">
 
-        password.type = "text";
+    <header>
 
-        togglePassword.innerHTML =
-            '<i class="fa-solid fa-eye-slash"></i>';
+        <h1>
 
-    } else {
+            Bem-vindo
 
-        password.type = "password";
+        </h1>
 
-        togglePassword.innerHTML =
-            '<i class="fa-solid fa-eye"></i>';
+        <p>
 
-    }
+            Sistema de Escalas São Miguel
 
-});
+        </p>
 
+    </header>
 
-// ======================================================
-// Login
-// ======================================================
+    <div class="cards">
 
-form.addEventListener("submit", async (e) => {
+        <div class="card">
 
-    e.preventDefault();
+            <i class="fa-solid fa-users"></i>
 
-    mostrarMensagem("");
+            <h2 id="totalFuncionarios">
 
-    iniciarLoading();
+                0
 
-    try {
+            </h2>
 
-        if (remember.checked) {
+            <p>
 
-            await lembrarLogin();
+                Funcionários
 
-        } else {
+            </p>
 
-            await sessaoTemporaria();
+        </div>
 
-        }
+        <div class="card">
 
-        await signInWithEmailAndPassword(
+            <i class="fa-solid fa-calendar-week"></i>
 
-            auth,
+            <h2>
 
-            email.value.trim(),
+                Escalas
 
-            password.value
+            </h2>
 
-        );
+            <p>
 
-        mostrarMensagem(
-            "Login realizado com sucesso!",
-            "#16a34a"
-        );
+                Gerenciar escalas
 
-        setTimeout(() => {
+            </p>
 
-            window.location.href = "dashboard.html";
+        </div>
 
-        }, 800);
+    </div>
 
-    } catch (error) {
+</div>
 
-        let mensagem = "Erro ao realizar login.";
+<script type="module" src="js/dashboard.js"></script>
 
-        switch (error.code) {
+</body>
 
-            case "auth/invalid-email":
-                mensagem = "E-mail inválido.";
-                break;
-
-            case "auth/user-not-found":
-                mensagem = "Usuário não encontrado.";
-                break;
-
-            case "auth/wrong-password":
-                mensagem = "Senha incorreta.";
-                break;
-
-            case "auth/invalid-credential":
-                mensagem = "E-mail ou senha inválidos.";
-                break;
-
-            case "auth/too-many-requests":
-                mensagem = "Muitas tentativas. Aguarde alguns minutos.";
-                break;
-
-            default:
-                mensagem = error.message;
-        }
-
-        mostrarMensagem(mensagem);
-
-    } finally {
-
-        finalizarLoading();
-
-    }
-
-});
-
-
-// ======================================================
-// Recuperar senha
-// ======================================================
-
-forgotPassword.addEventListener("click", async (e) => {
-
-    e.preventDefault();
-
-    if (email.value.trim() === "") {
-
-        mostrarMensagem("Informe seu e-mail primeiro.");
-
-        return;
-
-    }
-
-    try {
-
-        await sendPasswordResetEmail(
-
-            auth,
-
-            email.value.trim()
-
-        );
-
-        mostrarMensagem(
-
-            "E-mail de recuperação enviado.",
-
-            "#16a34a"
-
-        );
-
-    } catch (error) {
-
-        mostrarMensagem(error.message);
-
-    }
-
-});
-
-
-// ======================================================
-// Usuário já logado
-// ======================================================
-
-onAuthStateChanged(auth, (user) => {
-
-    if (!user) {
-        window.location.replace("login.html");
-        return;
-    }
-
-});
-
-
-// ======================================================
-// Logout
-// ======================================================
-
-export async function logout() {
-
-    await signOut(auth);
-
-    window.location.href = "login.html";
-
-}
+</html>
