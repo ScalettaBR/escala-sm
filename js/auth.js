@@ -191,21 +191,24 @@ if (forgotPassword && email) {
 
 onAuthStateChanged(auth, (user) => {
 
-    if (user) {
+    const pagina = window.location.pathname;
 
-        if (window.location.pathname !== "/dashboard.html") {
-            window.location.href = "/dashboard.html";
+    // Está na tela de login?
+    const estaNaTelaLogin = pagina.endsWith("/login.html") || pagina === "/login.html";
+
+    if (!user) {
+
+        if (!estaNaTelaLogin) {
+            window.location.href = "/login.html";
         }
 
-    } else {
+        return;
+    }
 
-        if (
-            window.location.pathname !== "/login" &&
-            !window.location.pathname.includes("login")
-        ) {
-            window.location.href = "/login";
-        }
-
+    // Se já está logado e está na tela de login,
+    // envia para o dashboard.
+    if (estaNaTelaLogin) {
+        window.location.href = "/dashboard.html";
     }
 
 });
@@ -218,6 +221,6 @@ onAuthStateChanged(auth, (user) => {
 export async function logout() {
 
     await signOut(auth);
-    window.location.href = "/login";
+    window.location.href = "/login.html";
 
 }
