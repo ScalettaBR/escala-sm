@@ -209,22 +209,13 @@ if (forgotPassword && email) {
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
-
-    const path = window.location.pathname;
-
-    if (user) {
-
-        if (path.includes("login.html") || path === "/" || path.includes("index.html")) {
-            window.location.replace("dashboard.html");
-        }
-
-    } else {
-
-        if (!path.includes("login.html")) {
-            window.location.replace("login.html");
-        }
+  if (user) {
+    navigate("/home");
+  } else {
+    if (window.location.pathname !== "/login") {
+      navigate("/login");
     }
-
+  }
 });
 
 
