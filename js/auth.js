@@ -3,11 +3,7 @@
 // auth.js
 // ======================================================
 
-import {
-    auth,
-    lembrarLogin,
-    sessaoTemporaria
-} from "../firebase.js";
+import { auth, lembrarLogin, sessaoTemporaria } from "./firebase.js";
 
 import {
     signInWithEmailAndPassword,
@@ -18,235 +14,219 @@ import {
 
 
 // ======================================================
-// Elementos da tela
+// ELEMENTOS
 // ======================================================
 
 const form = document.getElementById("loginForm");
-
 const email = document.getElementById("email");
-
 const password = document.getElementById("password");
-
 const remember = document.getElementById("remember");
-
 const loginMessage = document.getElementById("loginMessage");
-
 const btnLogin = document.getElementById("btnLogin");
-
 const loginText = document.getElementById("loginText");
-
 const loading = document.getElementById("loading");
-
 const forgotPassword = document.getElementById("forgotPassword");
-
 const togglePassword = document.getElementById("togglePassword");
 
 
 // ======================================================
-// Mostrar mensagem
+// MENSAGEM
 // ======================================================
 
 function mostrarMensagem(texto, cor = "#ef4444") {
 
-    loginMessage.innerText = texto;
+    if (!loginMessage) return;
 
+    loginMessage.innerText = texto;
     loginMessage.style.color = cor;
 
 }
 
 
 // ======================================================
-// Loading
+// LOADING
 // ======================================================
 
 function iniciarLoading() {
 
+    if (!btnLogin) return;
+
     btnLogin.disabled = true;
-
-    loginText.classList.add("hidden");
-
-    loading.classList.remove("hidden");
+    loginText?.classList.add("hidden");
+    loading?.classList.remove("hidden");
 
 }
 
 function finalizarLoading() {
 
+    if (!btnLogin) return;
+
     btnLogin.disabled = false;
-
-    loginText.classList.remove("hidden");
-
-    loading.classList.add("hidden");
+    loginText?.classList.remove("hidden");
+    loading?.classList.add("hidden");
 
 }
 
 
 // ======================================================
-// Mostrar/Ocultar senha
+// TOGGLE SENHA
 // ======================================================
 
-togglePassword.addEventListener("click", () => {
+if (togglePassword && password) {
 
-    if (password.type === "password") {
+    togglePassword.addEventListener("click", () => {
 
-        password.type = "text";
+        if (password.type === "password") {
 
-        togglePassword.innerHTML =
-            '<i class="fa-solid fa-eye-slash"></i>';
+            password.type = "text";
 
-    } else {
-
-        password.type = "password";
-
-        togglePassword.innerHTML =
-            '<i class="fa-solid fa-eye"></i>';
-
-    }
-
-});
-
-
-// ======================================================
-// Login
-// ======================================================
-
-form.addEventListener("submit", async (e) => {
-
-    e.preventDefault();
-
-    mostrarMensagem("");
-
-    iniciarLoading();
-
-    try {
-
-        if (remember.checked) {
-
-            await lembrarLogin();
+            togglePassword.innerHTML =
+                '<i class="fa-solid fa-eye-slash"></i>';
 
         } else {
 
-            await sessaoTemporaria();
+            password.type = "password";
+
+            togglePassword.innerHTML =
+                '<i class="fa-solid fa-eye"></i>';
 
         }
 
-        await signInWithEmailAndPassword(
+    });
 
-            auth,
+}
 
-            email.value.trim(),
 
-            password.value
+// ======================================================
+// LOGIN
+// ======================================================
 
-        );
+if (form) {
 
-        mostrarMensagem(
-            "Login realizado com sucesso!",
-            "#16a34a"
-        );
+    form.addEventListener("submit", async (e) => {
 
-        setTimeout(() => {
+        e.preventDefault();
 
-            window.location.href = "dashboard.html";
+        mostrarMensagem("");
+        iniciarLoading();
 
-        }, 800);
+        try {
 
-    } catch (error) {
+            if (remember?.checked) {
+                await lembrarLogin();
+            } else {
+                await sessaoTemporaria();
+            }
 
-        let mensagem = "Erro ao realizar login.";
+            await signInWithEmailAndPassword(
+                auth,
+                email.value.trim(),
+                password.value
+            );
 
-        switch (error.code) {
+            mostrarMensagem("Login realizado com sucesso!", "#16a34a");
 
-            case "auth/invalid-email":
-                mensagem = "E-mail inválido.";
-                break;
+        } catch (error) {
 
-            case "auth/user-not-found":
-                mensagem = "Usuário não encontrado.";
-                break;
+            let mensagem = "Erro ao realizar login.";
 
-            case "auth/wrong-password":
-                mensagem = "Senha incorreta.";
-                break;
+            switch (error.code) {
 
-            case "auth/invalid-credential":
-                mensagem = "E-mail ou senha inválidos.";
-                break;
+                case "auth/invalid-email":
+                    mensagem = "E-mail inválido.";
+                    break;
 
-            case "auth/too-many-requests":
-                mensagem = "Muitas tentativas. Aguarde alguns minutos.";
-                break;
+                case "auth/user-not-found":
+                    mensagem = "Usuário não encontrado.";
+                    break;
 
-            default:
-                mensagem = error.message;
+                case "auth/wrong-password":
+                    mensagem = "Senha incorreta.";
+                    break;
+
+                case "auth/invalid-credential":
+                    mensagem = "E-mail ou senha inválidos.";
+                    break;
+
+                case "auth/too-many-requests":
+                    mensagem = "Muitas tentativas. Aguarde alguns minutos.";
+                    break;
+
+                default:
+                    mensagem = error.message;
+            }
+
+            mostrarMensagem(mensagem);
+
+        } finally {
+
+            finalizarLoading();
+
         }
 
-        mostrarMensagem(mensagem);
+    });
 
-    } finally {
-
-        finalizarLoading();
-
-    }
-
-});
+}
 
 
 // ======================================================
-// Recuperar senha
+// RECUPERAR SENHA
 // ======================================================
 
-forgotPassword.addEventListener("click", async (e) => {
+if (forgotPassword && email) {
 
-    e.preventDefault();
+    forgotPassword.addEventListener("click", async (e) => {
 
-    if (email.value.trim() === "") {
+        e.preventDefault();
 
-        mostrarMensagem("Informe seu e-mail primeiro.");
+        if (email.value.trim() === "") {
+            mostrarMensagem("Informe seu e-mail primeiro.");
+            return;
+        }
 
-        return;
+        try {
 
-    }
+            await sendPasswordResetEmail(
+                auth,
+                email.value.trim()
+            );
 
-    try {
+            mostrarMensagem("E-mail de recuperação enviado.", "#16a34a");
 
-        await sendPasswordResetEmail(
+        } catch (error) {
 
-            auth,
+            mostrarMensagem(error.message);
 
-            email.value.trim()
+        }
 
-        );
+    });
 
-        mostrarMensagem(
-
-            "E-mail de recuperação enviado.",
-
-            "#16a34a"
-
-        );
-
-    } catch (error) {
-
-        mostrarMensagem(error.message);
-
-    }
-
-});
+}
 
 
 // ======================================================
-// Usuário já logado
+// AUTO LOGIN
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
 
-    if (!user) return;
-
     const pagina = window.location.pathname;
 
-    if (pagina.includes("login.html")) {
+    if (user) {
 
-        window.location.href = "dashboard.html";
+        if (
+            pagina.includes("login.html") ||
+            pagina === "/" ||
+            pagina.includes("index.html")
+        ) {
+            window.location.replace("dashboard.html");
+        }
+
+    } else {
+
+        if (!pagina.includes("login.html")) {
+            window.location.replace("login.html");
+        }
 
     }
 
@@ -254,13 +234,12 @@ onAuthStateChanged(auth, (user) => {
 
 
 // ======================================================
-// Logout
+// LOGOUT
 // ======================================================
 
 export async function logout() {
 
     await signOut(auth);
-
     window.location.href = "login.html";
 
 }
