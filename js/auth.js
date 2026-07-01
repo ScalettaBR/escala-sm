@@ -218,12 +218,22 @@ onAuthStateChanged(auth, (user) => {
 
     const pagina = window.location.pathname;
 
-    if (user && pagina.includes("login.html")) {
-        window.location.replace("dashboard.html");
-    }
+    // ainda carregando auth? não faz nada
+    if (user === undefined) return;
 
-    if (!user && !pagina.includes("login.html")) {
-        window.location.replace("login.html");
+    if (user) {
+
+        // se estiver no login, manda pro sistema
+        if (pagina.includes("login.html") || pagina === "/" || pagina === "/index.html") {
+            window.location.replace("dashboard.html");
+        }
+
+    } else {
+
+        // se não tiver login, força login
+        if (!pagina.includes("login.html")) {
+            window.location.replace("login.html");
+        }
     }
 
 });
