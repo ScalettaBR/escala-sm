@@ -193,8 +193,8 @@ onAuthStateChanged(auth, (user) => {
 
     if (user) {
 
-        if (window.location.pathname !== "/dashboard") {
-            window.location.href = "/dashboard";
+        if (window.location.pathname !== "/dashboard.html") {
+            window.location.href = "/dashboard.html";
         }
 
     } else {
