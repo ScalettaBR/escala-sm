@@ -30,15 +30,6 @@ const togglePassword = document.getElementById("togglePassword");
 
 
 // ======================================================
-// PROTEÇÃO DOM (evita crash no deploy)
-// ======================================================
-
-if (!form || !email || !password) {
-    console.warn("Elementos do login não encontrados.");
-}
-
-
-// ======================================================
 // MENSAGEM
 // ======================================================
 
@@ -61,8 +52,8 @@ function iniciarLoading() {
     if (!btnLogin) return;
 
     btnLogin.disabled = true;
-    loginText.classList.add("hidden");
-    loading.classList.remove("hidden");
+    loginText?.classList.add("hidden");
+    loading?.classList.remove("hidden");
 
 }
 
@@ -71,14 +62,14 @@ function finalizarLoading() {
     if (!btnLogin) return;
 
     btnLogin.disabled = false;
-    loginText.classList.remove("hidden");
-    loading.classList.add("hidden");
+    loginText?.classList.remove("hidden");
+    loading?.classList.add("hidden");
 
 }
 
 
 // ======================================================
-// TOGGLE SENHA
+// TOGGLE SENHA (CORRIGIDO)
 // ======================================================
 
 if (togglePassword && password) {
@@ -121,7 +112,7 @@ if (form) {
 
         try {
 
-            if (remember.checked) {
+            if (remember?.checked) {
                 await lembrarLogin();
             } else {
                 await sessaoTemporaria();
@@ -186,7 +177,7 @@ if (form) {
 // RECUPERAR SENHA
 // ======================================================
 
-if (forgotPassword) {
+if (forgotPassword && email) {
 
     forgotPassword.addEventListener("click", async (e) => {
 
