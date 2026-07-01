@@ -219,9 +219,7 @@ onAuthStateChanged(auth, (user) => {
 
     if (!user) return;
 
-    const pagina = window.location.pathname;
-
-    if (pagina.includes("login.html")) {
+    if (window.location.pathname.includes("login.html")) {
         window.location.href = "dashboard.html";
     }
 
