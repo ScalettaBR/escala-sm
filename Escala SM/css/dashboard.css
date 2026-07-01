@@ -1,0 +1,334 @@
+/* =====================================================
+   Escala São Miguel
+   dashboard.css
+===================================================== */
+
+/* Layout */
+
+body{
+    display:flex;
+    min-height:100vh;
+    background:#f4f7fb;
+}
+
+/* ==========================
+   MENU LATERAL
+========================== */
+
+.sidebar{
+
+    width:260px;
+
+    background:#0f172a;
+
+    color:#fff;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
+
+    padding:25px 18px;
+
+    position:fixed;
+
+    left:0;
+    top:0;
+    bottom:0;
+
+    box-shadow:4px 0 18px rgba(0,0,0,.12);
+
+}
+
+.logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    font-size:22px;
+
+    font-weight:600;
+
+    margin-bottom:40px;
+
+}
+
+.logo i{
+
+    color:#3b82f6;
+
+    font-size:28px;
+
+}
+
+.sidebar nav{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+}
+
+.sidebar nav a{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:14px;
+
+    border-radius:10px;
+
+    color:#cbd5e1;
+
+    transition:.25s;
+
+}
+
+.sidebar nav a:hover{
+
+    background:#1e293b;
+
+    color:#fff;
+
+}
+
+.sidebar nav a.active{
+
+    background:#2563eb;
+
+    color:#fff;
+
+}
+
+.sidebar nav a i{
+
+    width:20px;
+
+    text-align:center;
+
+}
+
+/* ==========================
+   BOTÃO SAIR
+========================== */
+
+#btnLogout{
+
+    width:100%;
+
+    padding:14px;
+
+    background:#ef4444;
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    transition:.25s;
+
+}
+
+#btnLogout:hover{
+
+    background:#dc2626;
+
+}
+
+/* ==========================
+   CONTEÚDO
+========================== */
+
+.content{
+
+    flex:1;
+
+    margin-left:260px;
+
+    padding:40px;
+
+}
+
+header{
+
+    margin-bottom:35px;
+
+}
+
+header h1{
+
+    font-size:34px;
+
+    color:#0f172a;
+
+}
+
+header p{
+
+    color:#64748b;
+
+    margin-top:8px;
+
+}
+
+/* ==========================
+   CARDS
+========================== */
+
+.cards{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+
+    gap:25px;
+
+}
+
+.card{
+
+    background:#fff;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+    transition:.25s;
+
+    text-align:center;
+
+}
+
+.card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.card i{
+
+    font-size:45px;
+
+    color:#2563eb;
+
+    margin-bottom:18px;
+
+}
+
+.card h2{
+
+    font-size:34px;
+
+    color:#0f172a;
+
+    margin-bottom:8px;
+
+}
+
+.card p{
+
+    color:#64748b;
+
+}
+
+/* ==========================
+   RESPONSIVO
+========================== */
+
+@media(max-width:900px){
+
+    .sidebar{
+
+        width:80px;
+
+    }
+
+    .logo span{
+
+        display:none;
+
+    }
+
+    .sidebar nav a{
+
+        justify-content:center;
+
+    }
+
+    .sidebar nav a span{
+
+        display:none;
+
+    }
+
+    .sidebar nav a{
+
+        font-size:0;
+
+    }
+
+    .sidebar nav a i{
+
+        font-size:20px;
+
+        margin:0;
+
+    }
+
+    #btnLogout{
+
+        font-size:0;
+
+    }
+
+    #btnLogout i{
+
+        font-size:18px;
+
+    }
+
+    .content{
+
+        margin-left:80px;
+
+    }
+
+}
+
+@media(max-width:650px){
+
+    .content{
+
+        padding:20px;
+
+    }
+
+    header h1{
+
+        font-size:28px;
+
+    }
+
+    .cards{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
