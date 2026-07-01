@@ -53,10 +53,8 @@ const storage = getStorage(app);
 // ======================================================
 
 // padrão: sessão (evita login eterno inesperado)
-setPersistence(auth, browserSessionPersistence)
-    .catch((err) => {
-        console.error("Erro ao definir persistência:", err);
-    });
+setPersistence(auth, browserLocalPersistence)
+    .catch(console.error);
 
 async function lembrarLogin() {
     return setPersistence(auth, browserLocalPersistence);
