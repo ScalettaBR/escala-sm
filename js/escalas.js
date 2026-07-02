@@ -1077,6 +1077,89 @@ function novaEscala() {
 
 }
 
+// =====================================================
+// EXPORTAR PDF
+// =====================================================
+
+async function exportarPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF("l", "mm", "a4");
+
+    pdf.setFontSize(18);
+
+    pdf.text("Escala São Miguel", 14, 15);
+
+    pdf.setFontSize(11);
+
+    pdf.text(`Mês: ${mesInput.value}`, 14, 23);
+
+    const headers = [];
+
+    headers.push("Funcionário");
+    headers.push("Função");
+    headers.push("Turno");
+
+    document.querySelectorAll("#thead th").forEach((th, indice) => {
+
+        if (indice < 3) return;
+
+        headers.push(th.innerText);
+
+    });
+
+    const body = [];
+
+    document.querySelectorAll("#tbody tr").forEach((tr) => {
+
+        if (
+            tr.classList.contains("tituloTurno") ||
+            tr.classList.contains("funcaoHeader")
+        ) {
+            return;
+        }
+
+        const linha = [];
+
+        tr.querySelectorAll("td").forEach((td) => {
+
+            linha.push(td.innerText);
+
+        });
+
+        body.push(linha);
+
+    });
+
+    pdf.autoTable({
+
+        head: [headers],
+
+        body: body,
+
+        startY: 30,
+
+        styles: {
+
+            fontSize: 8,
+
+            halign: "center"
+
+        },
+
+        headStyles: {
+
+            fillColor: [40, 40, 40]
+
+        }
+
+    });
+
+    pdf.save(`Escala_${mesInput.value}.pdf`);
+
+}
+
 
 // =====================================================
 // EXPORTAR OBJETO (FUTURO PDF/EXCEL)
