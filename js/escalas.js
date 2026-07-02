@@ -4,10 +4,11 @@
 // =====================================================
 
 import {
+    collection,
+    getDocs,
+    addDoc,
     doc,
-    setDoc,
-    getDoc,
-    serverTimestamp
+    setDoc
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 // =====================================================
