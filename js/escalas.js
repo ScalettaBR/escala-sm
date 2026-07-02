@@ -1081,6 +1081,8 @@ function novaEscala() {
 // EXPORTAR PDF
 // =====================================================
 
+btnPDF.addEventListener("click", exportarPDF);
+
 async function exportarPDF() {
 
     const { jsPDF } = window.jspdf;
