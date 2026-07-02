@@ -101,31 +101,35 @@ async function carregarFuncionarios() {
 
 
 // =====================================================
-// GERAR DIAS DO MÊS
+// GERAR APENAS SÁBADOS E DOMINGOS
 // =====================================================
 
 function gerarDias(ano, mes) {
 
     const dias = [];
 
-    const ultimoDia = new Date(
-
-        ano,
-        mes + 1,
-        0
-
-    ).getDate();
+    const ultimoDia = new Date(ano, mes + 1, 0).getDate();
 
     for (let dia = 1; dia <= ultimoDia; dia++) {
 
-        dias.push(dia);
+        const data = new Date(ano, mes, dia);
+
+        const semana = data.getDay();
+
+        if (semana === 0 || semana === 6) {
+
+            dias.push({
+                numero: dia,
+                diaSemana: semana
+            });
+
+        }
 
     }
 
     return dias;
 
 }
-
 
 // =====================================================
 // VERIFICAR SE É DOMINGO
@@ -211,14 +215,12 @@ function gerarEscalaAutomatica(dias) {
 
         let contador = indice % 7;
 
-        dias.forEach((dia) => {
+      dias.forEach((dia) => {
 
-            const chave = criarChave(
-
-                funcionario.id,
-                dia
-
-            );
+    const chave = criarChave(
+        funcionario.id,
+        dia.numero
+    );
 
             if (contador === 6) {
 
@@ -279,12 +281,16 @@ function criarCabecalho(dias) {
 
     html += "<th>Turno</th>";
 
-    dias.forEach((dia) => {
+   dias.forEach((dia) => {
 
-        html += `<th>${dia}</th>`;
+    const texto = dia.diaSemana === 6
+        ? `Sáb<br>${dia.numero}`
+        : `Dom<br>${dia.numero}`;
 
-    });
+    html += `<th>${texto}</th>`;
 
+});
+    
     html += "</tr>";
 
     thead.innerHTML = html;
@@ -308,14 +314,12 @@ function criarLinhaFuncionario(funcionario, dias) {
 
     html += `<td>${funcionario.turno}</td>`;
 
-    dias.forEach((dia) => {
+   dias.forEach((dia) => {
 
-        const chave = criarChave(
-
-            funcionario.id,
-            dia
-
-        );
+    const chave = criarChave(
+        funcionario.id,
+        dia.numero
+    );
 
         html += `
 
