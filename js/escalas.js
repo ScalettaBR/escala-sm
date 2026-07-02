@@ -29,6 +29,8 @@ const btnSalvar = document.getElementById("btnSalvar");
 
 const menu = document.getElementById("menuCelula");
 
+const btnPDF = document.getElementById("btnPDF");
+
 
 // =====================================================
 // VARIÁVEIS GLOBAIS
