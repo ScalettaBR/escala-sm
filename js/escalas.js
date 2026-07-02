@@ -3,31 +3,47 @@
 // escalas.js
 // =====================================================
 
+import { db } from "./firebase.js";
+
 import {
     collection,
     getDocs,
-    addDoc,
+    getDoc,
     doc,
-    setDoc
+    setDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
+
 // =====================================================
-// ELEMENTOS
+// ELEMENTOS DA TELA
 // =====================================================
 
 const thead = document.getElementById("thead");
 const tbody = document.getElementById("tbody");
 
 const mesInput = document.getElementById("mes");
+
 const btnGerar = document.getElementById("btnGerar");
 const btnSalvar = document.getElementById("btnSalvar");
 
 const menu = document.getElementById("menuCelula");
 
-// estado global da escala
+
+// =====================================================
+// VARIÁVEIS GLOBAIS
+// =====================================================
+
 let funcionarios = [];
+
+let funcionariosManha = [];
+
+let funcionariosNoite = [];
+
 let escala = {};
+
 let celulaAtiva = null;
+
 
 // =====================================================
 // CARREGAR FUNCIONÁRIOS
@@ -35,28 +51,54 @@ let celulaAtiva = null;
 
 async function carregarFuncionarios() {
 
-    const snap = await getDocs(collection(db, "funcionarios"));
-
     funcionarios = [];
+    funcionariosManha = [];
+    funcionariosNoite = [];
 
-    snap.forEach(doc => {
+    const snapshot = await getDocs(
+        collection(db, "funcionarios")
+    );
 
-        const data = doc.data();
+    snapshot.forEach((registro) => {
 
-        if (data.status === "Ativo") {
+        const data = registro.data();
 
-            funcionarios.push({
-                id: doc.id,
-                nome: data.nome,
-                funcao: data.funcao,
-                turno: data.turno
-            });
+        if (data.status !== "Ativo") return;
+
+        const funcionario = {
+
+            id: registro.id,
+
+            nome: data.nome || "",
+
+            funcao: data.funcao || "",
+
+            turno: data.turno || "Manhã"
+
+        };
+
+        funcionarios.push(funcionario);
+
+        if (funcionario.turno === "Manhã") {
+
+            funcionariosManha.push(funcionario);
+
+        } else {
+
+            funcionariosNoite.push(funcionario);
 
         }
 
     });
 
+    funcionarios.sort((a, b) =>
+
+        a.nome.localeCompare(b.nome)
+
+    );
+
 }
+
 
 // =====================================================
 // GERAR DIAS DO MÊS
@@ -66,11 +108,17 @@ function gerarDias(ano, mes) {
 
     const dias = [];
 
-    const total = new Date(ano, mes + 1, 0).getDate();
+    const ultimoDia = new Date(
 
-    for (let i = 1; i <= total; i++) {
+        ano,
+        mes + 1,
+        0
 
-        dias.push(i);
+    ).getDate();
+
+    for (let dia = 1; dia <= ultimoDia; dia++) {
+
+        dias.push(dia);
 
     }
 
@@ -78,108 +126,903 @@ function gerarDias(ano, mes) {
 
 }
 
+
 // =====================================================
-// CRIAR TABELA
+// VERIFICAR SE É DOMINGO
 // =====================================================
 
-function criarTabela(dias) {
+function ehDomingo(ano, mes, dia) {
 
-    thead.innerHTML = "";
-    tbody.innerHTML = "";
+    return new Date(
 
-    // HEADER
-    let header = "<tr><th>Funcionário</th>";
+        ano,
+        mes,
+        dia
 
-    dias.forEach(d => {
+    ).getDay() === 0;
 
-        header += `<th>${d}</th>`;
+}
 
-    });
 
-    header += "</tr>";
+// =====================================================
+// VERIFICAR SE É SÁBADO
+// =====================================================
 
-    thead.innerHTML = header;
+function ehSabado(ano, mes, dia) {
 
-    // LINHAS
-    funcionarios.forEach(f => {
+    return new Date(
 
-        let row = `<tr data-id="${f.id}">`;
+        ano,
+        mes,
+        dia
 
-        row += `<td>${f.nome} (${f.funcao})</td>`;
+    ).getDay() === 6;
 
-        dias.forEach(d => {
+}
 
-            const key = `${f.id}-${d}`;
 
-            if (!escala[key]) {
-                escala[key] = "X";
+// =====================================================
+// CRIA CHAVE DA ESCALA
+// =====================================================
+
+function criarChave(funcionarioId, dia) {
+
+    return `${funcionarioId}-${dia}`;
+
+}
+
+
+// =====================================================
+// LIMPAR ESCALA
+// =====================================================
+
+function limparEscala() {
+
+    escala = {};
+
+}
+
+
+// =====================================================
+// GERADOR AUTOMÁTICO 6x1
+// =====================================================
+//
+// M = Trabalha
+// F = Folga
+//
+// regra:
+//
+// trabalha 6 dias
+// folga 1
+//
+// posteriormente iremos adicionar:
+//
+// sábado/domingo alternado
+// funções críticas
+// distribuição equilibrada
+//
+// =====================================================
+
+function gerarEscalaAutomatica(dias) {
+
+    limparEscala();
+
+    funcionarios.forEach((funcionario, indice) => {
+
+        let contador = indice % 7;
+
+        dias.forEach((dia) => {
+
+            const chave = criarChave(
+
+                funcionario.id,
+                dia
+
+            );
+
+            if (contador === 6) {
+
+                escala[chave] = "F";
+
+                contador = 0;
+
             }
 
-            row += `<td data-key="${key}">${escala[key]}</td>`;
+            else {
+
+                escala[chave] = "M";
+
+                contador++;
+
+            }
 
         });
 
-        row += "</tr>";
+    });
 
-        tbody.innerHTML += row;
+}
+
+// =====================================================
+// ORDENAR POR FUNÇÃO E NOME
+// =====================================================
+
+function ordenarFuncionarios(lista) {
+
+    return [...lista].sort((a, b) => {
+
+        if (a.funcao !== b.funcao) {
+
+            return a.funcao.localeCompare(b.funcao);
+
+        }
+
+        return a.nome.localeCompare(b.nome);
 
     });
+
+}
+
+
+// =====================================================
+// CRIAR HEADER
+// =====================================================
+
+function criarCabecalho(dias) {
+
+    let html = "";
+
+    html += "<tr>";
+
+    html += "<th>Funcionário</th>";
+
+    html += "<th>Função</th>";
+
+    html += "<th>Turno</th>";
+
+    dias.forEach((dia) => {
+
+        html += `<th>${dia}</th>`;
+
+    });
+
+    html += "</tr>";
+
+    thead.innerHTML = html;
+
+}
+
+
+// =====================================================
+// LINHA DO FUNCIONÁRIO
+// =====================================================
+
+function criarLinhaFuncionario(funcionario, dias) {
+
+    let html = "";
+
+    html += `<tr data-id="${funcionario.id}">`;
+
+    html += `<td class="nome">${funcionario.nome}</td>`;
+
+    html += `<td>${funcionario.funcao}</td>`;
+
+    html += `<td>${funcionario.turno}</td>`;
+
+    dias.forEach((dia) => {
+
+        const chave = criarChave(
+
+            funcionario.id,
+            dia
+
+        );
+
+        html += `
+
+            <td
+                class="celulaEscala"
+                data-key="${chave}"
+            >
+
+                ${escala[chave] || ""}
+
+            </td>
+
+        `;
+
+    });
+
+    html += "</tr>";
+
+    return html;
+
+}
+
+
+// =====================================================
+// TÍTULO DA SEÇÃO
+// =====================================================
+
+function criarTitulo(texto, colunas) {
+
+    return `
+
+        <tr class="tituloTurno">
+
+            <td colspan="${colunas}">
+
+                ${texto}
+
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+
+// =====================================================
+// AGRUPAR POR FUNÇÃO
+// =====================================================
+
+function agruparPorFuncao(lista) {
+
+    const grupos = {};
+
+    lista.forEach((funcionario) => {
+
+        if (!grupos[funcionario.funcao]) {
+
+            grupos[funcionario.funcao] = [];
+
+        }
+
+        grupos[funcionario.funcao].push(funcionario);
+
+    });
+
+    return grupos;
+
+}
+
+
+// =====================================================
+// RENDERIZAR TURNO
+// =====================================================
+
+function renderizarTurno(
+
+    titulo,
+
+    lista,
+
+    dias
+
+) {
+
+    const grupos = agruparPorFuncao(
+
+        ordenarFuncionarios(lista)
+
+    );
+
+    tbody.innerHTML += criarTitulo(
+
+        titulo,
+
+        dias.length + 3
+
+    );
+
+    Object.keys(grupos).forEach((funcao) => {
+
+        tbody.innerHTML += `
+
+            <tr class="funcaoHeader">
+
+                <td colspan="${dias.length + 3}">
+
+                    ${funcao}
+
+                </td>
+
+            </tr>
+
+        `;
+
+        grupos[funcao].forEach((funcionario) => {
+
+            tbody.innerHTML += criarLinhaFuncionario(
+
+                funcionario,
+
+                dias
+
+            );
+
+        });
+
+    });
+
+}
+
+
+// =====================================================
+// RENDERIZAR TABELA
+// =====================================================
+
+function renderizarTabela(
+
+    ano,
+
+    mes,
+
+    dias
+
+) {
+
+    criarCabecalho(dias);
+
+    tbody.innerHTML = "";
+
+    renderizarTurno(
+
+        "TURNO MANHÃ",
+
+        funcionariosManha,
+
+        dias
+
+    );
+
+    renderizarTurno(
+
+        "TURNO NOITE",
+
+        funcionariosNoite,
+
+        dias
+
+    );
 
     ativarEventosCelulas();
 
 }
 
+
 // =====================================================
-// CLIQUE NAS CÉLULAS
+// GERAR ESCALA
+// =====================================================
+
+async function gerarEscala() {
+
+    if (!mesInput.value) {
+
+        alert("Selecione um mês.");
+
+        return;
+
+    }
+
+    const [
+
+        ano,
+
+        mes
+
+    ] = mesInput.value.split("-");
+
+    await carregarFuncionarios();
+
+    const dias = gerarDias(
+
+        parseInt(ano),
+
+        parseInt(mes) - 1
+
+    );
+
+    gerarEscalaAutomatica(dias);
+
+    renderizarTabela(
+
+        parseInt(ano),
+
+        parseInt(mes) - 1,
+
+        dias
+
+    );
+
+}
+
+
+// =====================================================
+// BOTÃO GERAR
+// =====================================================
+
+btnGerar.addEventListener(
+
+    "click",
+
+    gerarEscala
+
+);
+
+// =====================================================
+// ATIVAR EVENTOS DAS CÉLULAS
 // =====================================================
 
 function ativarEventosCelulas() {
 
-    document.querySelectorAll("#tabelaEscala td[data-key]").forEach(td => {
+    const celulas = document.querySelectorAll(".celulaEscala");
 
-        td.addEventListener("click", (e) => {
+    celulas.forEach((celula) => {
 
-            celulaAtiva = td;
-
-            const rect = td.getBoundingClientRect();
-
-            menu.style.top = rect.top + window.scrollY + "px";
-            menu.style.left = rect.left + window.scrollX + "px";
-
-            menu.classList.remove("hidden");
-
-        });
+        celula.addEventListener("click", abrirMenuCelula);
 
     });
 
 }
 
+
 // =====================================================
-// MENU DE ALTERAÇÃO
+// ABRIR MENU
 // =====================================================
 
-menu.addEventListener("click", (e) => {
+function abrirMenuCelula(event) {
 
-    if (e.target.tagName !== "BUTTON") return;
+    celulaAtiva = event.currentTarget;
 
-    const valor = e.target.dataset.value;
+    const rect = celulaAtiva.getBoundingClientRect();
 
-    if (celulaAtiva) {
+    menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    menu.style.left = `${rect.left + window.scrollX}px`;
 
-        celulaAtiva.innerText = valor;
+    menu.classList.remove("hidden");
 
-        escala[celulaAtiva.dataset.key] = valor;
+}
 
-    }
+
+// =====================================================
+// FECHAR MENU
+// =====================================================
+
+function fecharMenu() {
 
     menu.classList.add("hidden");
 
+    celulaAtiva = null;
+
+}
+
+
+// =====================================================
+// ALTERAR VALOR DA CÉLULA
+// =====================================================
+
+function alterarCelula(valor) {
+
+    if (!celulaAtiva) return;
+
+    celulaAtiva.textContent = valor;
+
+    const chave = celulaAtiva.dataset.key;
+
+    escala[chave] = valor;
+
+}
+
+
+// =====================================================
+// MENU DE OPÇÕES
+// =====================================================
+
+menu.addEventListener("click", (event) => {
+
+    const botao = event.target.closest("button");
+
+    if (!botao) return;
+
+    const valor = botao.dataset.value;
+
+    if (!valor) return;
+
+    alterarCelula(valor);
+
+    fecharMenu();
+
 });
 
-// fechar ao clicar fora
-document.addEventListener("click", (e) => {
 
-    if (!menu.contains(e.target)) {
+// =====================================================
+// FECHAR MENU AO CLICAR FORA
+// =====================================================
+
+document.addEventListener("click", (event) => {
+
+    if (menu.classList.contains("hidden")) return;
+
+    if (menu.contains(event.target)) return;
+
+    if (event.target.classList.contains("celulaEscala")) return;
+
+    fecharMenu();
+
+});
+
+
+// =====================================================
+// FECHAR MENU COM ESC
+// =====================================================
+
+document.addEventListener("keydown", (event) => {
+
+    if (event.key === "Escape") {
+
+        fecharMenu();
+
+    }
+
+});
+
+
+// =====================================================
+// DUPLO CLIQUE
+// Alterna rapidamente entre
+// M e F
+// =====================================================
+
+document.addEventListener("dblclick", (event) => {
+
+    if (!event.target.classList.contains("celulaEscala")) {
+
+        return;
+
+    }
+
+    const chave = event.target.dataset.key;
+
+    const atual = escala[chave] || "M";
+
+    const novoValor = atual === "M"
+        ? "F"
+        : "M";
+
+    escala[chave] = novoValor;
+
+    event.target.textContent = novoValor;
+
+});
+
+
+// =====================================================
+// LEGENDAS
+// =====================================================
+
+const legenda = {
+
+    M: "Trabalha",
+
+    F: "Folga",
+
+    FE: "Férias",
+
+    A: "Atestado",
+
+    FC: "Folga Compensada",
+
+    DSR: "Descanso"
+
+};
+
+
+// =====================================================
+// TOOLTIP
+// =====================================================
+
+document.addEventListener("mouseover", (event) => {
+
+    if (!event.target.classList.contains("celulaEscala")) {
+
+        return;
+
+    }
+
+    const valor = event.target.textContent.trim();
+
+    if (!legenda[valor]) {
+
+        event.target.removeAttribute("title");
+
+        return;
+
+    }
+
+    event.target.title = legenda[valor];
+
+});
+
+
+// =====================================================
+// CONTADOR DE ESCALA
+// =====================================================
+
+function contarStatus(status) {
+
+    return Object.values(escala)
+
+        .filter(valor => valor === status)
+
+        .length;
+
+}
+
+
+// =====================================================
+// ESTATÍSTICAS
+// =====================================================
+
+function atualizarResumo() {
+
+    console.log(
+
+        "Trabalhos:",
+
+        contarStatus("M")
+
+    );
+
+    console.log(
+
+        "Folgas:",
+
+        contarStatus("F")
+
+    );
+
+}
+
+// =====================================================
+// CARREGAR ESCALA EXISTENTE
+// =====================================================
+
+async function carregarEscalaExistente(mes) {
+
+    try {
+
+        const referencia = doc(db, "escalas", mes);
+
+        const documento = await getDoc(referencia);
+
+        if (!documento.exists()) {
+
+            escala = {};
+
+            return false;
+
+        }
+
+        const dados = documento.data();
+
+        escala = dados.dados || {};
+
+        return true;
+
+    }
+
+    catch (erro) {
+
+        console.error("Erro ao carregar escala:", erro);
+
+        escala = {};
+
+        return false;
+
+    }
+
+}
+
+
+// =====================================================
+// SALVAR ESCALA
+// =====================================================
+
+async function salvarEscala() {
+
+    if (!mesInput.value) {
+
+        alert("Selecione um mês.");
+
+        return;
+
+    }
+
+    try {
+
+        const referencia = doc(
+
+            db,
+
+            "escalas",
+
+            mesInput.value
+
+        );
+
+        await setDoc(
+
+            referencia,
+
+            {
+
+                mes: mesInput.value,
+
+                dados: escala,
+
+                quantidadeFuncionarios: funcionarios.length,
+
+                atualizadoEm: serverTimestamp()
+
+            },
+
+            {
+
+                merge: true
+
+            }
+
+        );
+
+        alert("Escala salva com sucesso!");
+
+    }
+
+    catch (erro) {
+
+        console.error(erro);
+
+        alert("Erro ao salvar a escala.");
+
+    }
+
+}
+
+
+// =====================================================
+// BOTÃO SALVAR
+// =====================================================
+
+btnSalvar.addEventListener(
+
+    "click",
+
+    salvarEscala
+
+);
+
+
+// =====================================================
+// GERAR ESCALA
+// =====================================================
+
+async function gerarEscalaCompleta() {
+
+    if (!mesInput.value) {
+
+        alert("Selecione um mês.");
+
+        return;
+
+    }
+
+    const [
+
+        ano,
+
+        mes
+
+    ] = mesInput.value.split("-");
+
+    await carregarFuncionarios();
+
+    const dias = gerarDias(
+
+        parseInt(ano),
+
+        parseInt(mes) - 1
+
+    );
+
+    const existe = await carregarEscalaExistente(
+
+        mesInput.value
+
+    );
+
+    if (!existe) {
+
+        gerarEscalaAutomatica(dias);
+
+    }
+
+    renderizarTabela(
+
+        parseInt(ano),
+
+        parseInt(mes) - 1,
+
+        dias
+
+    );
+
+}
+
+
+// =====================================================
+// SUBSTITUI EVENTO DO BOTÃO GERAR
+// =====================================================
+
+btnGerar.removeEventListener(
+
+    "click",
+
+    gerarEscala
+
+);
+
+btnGerar.addEventListener(
+
+    "click",
+
+    gerarEscalaCompleta
+
+);
+
+
+// =====================================================
+// AVISO AO SAIR SEM SALVAR
+// =====================================================
+
+window.addEventListener(
+
+    "beforeunload",
+
+    function (e) {
+
+        e.preventDefault();
+
+        e.returnValue = "";
+
+    }
+
+);
+
+// =====================================================
+// DEFINIR MÊS ATUAL
+// =====================================================
+
+function definirMesAtual() {
+
+    const hoje = new Date();
+
+    const ano = hoje.getFullYear();
+
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+
+    mesInput.value = `${ano}-${mes}`;
+
+}
+
+
+// =====================================================
+// FECHAR MENU AO REDIMENSIONAR
+// =====================================================
+
+window.addEventListener("resize", () => {
+
+    if (!menu.classList.contains("hidden")) {
 
         menu.classList.add("hidden");
 
@@ -187,96 +1030,99 @@ document.addEventListener("click", (e) => {
 
 });
 
+
 // =====================================================
-// GERAR ESCALA
+// FECHAR MENU AO ROLAR A PÁGINA
 // =====================================================
 
-btnGerar.addEventListener("click", async () => {
+window.addEventListener("scroll", () => {
 
-    if (!mesInput.value) {
-        alert("Selecione o mês");
-        return;
+    if (!menu.classList.contains("hidden")) {
+
+        menu.classList.add("hidden");
+
     }
-
-    await carregarFuncionarios();
-
-    const mes = mesInput.value;
-
-    const [ano, m] = mes.split("-");
-
-    const dias = gerarDias(parseInt(ano), parseInt(m) - 1);
-
-    await carregarEscalaExistente(mes);
-
-    criarTabela(dias);
 
 });
 
+
 // =====================================================
-// CARREGAR ESCALA
+// LIMPAR ESCALA
 // =====================================================
-async function carregarEscalaExistente(mes) {
 
-    const ref = doc(db, "escalas", mes);
+function limparTabela() {
 
-    const snap = await getDoc(ref);
+    thead.innerHTML = "";
 
-    if (snap.exists()) {
+    tbody.innerHTML = "";
 
-        const data = snap.data();
+}
 
-        escala = data.dados || {};
 
-        return true;
+// =====================================================
+// NOVA ESCALA
+// =====================================================
 
-    }
+function novaEscala() {
+
+    limparTabela();
 
     escala = {};
 
-    return false;
+}
+
+
+// =====================================================
+// EXPORTAR OBJETO (FUTURO PDF/EXCEL)
+// =====================================================
+
+function obterEscala() {
+
+    return {
+
+        funcionarios,
+
+        escala
+
+    };
 
 }
+
+
 // =====================================================
-// SALVAR (BASE SIMPLES)
+// DEBUG
 // =====================================================
 
-btnSalvar.addEventListener("click", async () => {
+window.debugEscala = () => {
 
-    if (!mesInput.value) {
-        alert("Selecione um mês");
-        return;
-    }
+    console.log("Funcionários");
 
-    try {
+    console.table(funcionarios);
 
-        const ref = doc(db, "escalas", mesInput.value);
+    console.log("Escala");
 
-        await setDoc(ref, {
+    console.log(escala);
 
-            mes: mesInput.value,
-            dados: escala,
-            updatedAt: serverTimestamp()
+};
 
-        }, { merge: true });
-
-        alert("Escala salva com sucesso no Firebase!");
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Erro ao salvar escala");
-
-    }
-
-});
 
 // =====================================================
 // INICIALIZAÇÃO
 // =====================================================
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
 
-    console.log("Escalas carregado");
+    definirMesAtual();
+
+    console.log("===================================");
+
+    console.log("Escala São Miguel");
+
+    console.log("Sistema iniciado com sucesso.");
+
+    console.log("===================================");
 
 });
+
+
+
